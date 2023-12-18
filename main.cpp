@@ -5,11 +5,11 @@
 #include <array>
 
 boost::asio::io_service io_service;
-boost::asio::ip::udp::socket socket(io_service, asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), 14551));
+boost::asio::ip::udp::socket socket_other(io_service, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), 14551));
 boost::asio::ip::udp::endpoint sender_endpoint;
 std::array<char, 1024> buffer;
 
-void handle_receive(const boost::asio::error_code& error, std::size_t bytes_transferred) {
+void handle_receive(const std::error_code& error, std::size_t bytes_transferred) {
     if (!error) {
         mavlink_message_t msg;
         mavlink_status_t status;
@@ -29,14 +29,14 @@ void handle_receive(const boost::asio::error_code& error, std::size_t bytes_tran
                 }
             }
         }
-        socket.async_receive_from(boost::asio::buffer(buffer), sender_endpoint, handle_receive);
+        socket_other.async_receive_from(boost::asio::buffer(buffer), sender_endpoint, handle_receive);
     } else {
         std::cerr << "Error in receive: " << error.message() << std::endl;
     }
 }
 
 int main() {
-    socket.async_receive_from(boost::asio::buffer(buffer), sender_endpoint, handle_receive);
+    socket_other.async_receive_from(boost::asio::buffer(buffer), sender_endpoint, handle_receive);
     io_service.run();
 
     return 0;
