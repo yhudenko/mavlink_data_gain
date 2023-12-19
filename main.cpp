@@ -41,7 +41,24 @@ void handle_receive(const std::error_code& error, std::size_t bytes_transferred)
     }
 }
 
+void sendHeartbeat(const std::error_code& /*error*/, boost::asio::steady_timer* heartbeat_timer) {
+    std::cerr << "Send Heartbeat" << std::endl;
+    mavlink_message_t msg;
+    mavlink_msg_heartbeat_pack(1, 200, &msg, MAV_TYPE_QUADROTOR, MAV_AUTOPILOT_GENERIC, MAV_MODE_GUIDED_ARMED, 0, MAV_STATE_ACTIVE);
+
+    uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+    uint16_t len = mavlink_msg_to_send_buffer(buffer, &msg);
+
+    socket_other.send_to(boost::asio::buffer(buffer, len), sender_endpoint);
+
+    heartbeat_timer->expires_at(heartbeat_timer->expiry() + boost::asio::chrono::seconds(1));
+    heartbeat_timer->async_wait(std::bind(&sendHeartbeat, std::placeholders::_1, heartbeat_timer));
+}
+
 int main() {
+    boost::asio::steady_timer heartbeat_timer(io_service, boost::asio::chrono::seconds(1));
+    heartbeat_timer.async_wait(std::bind(&sendHeartbeat, std::placeholders::_1, &heartbeat_timer));
+
     std::cout << "Received message" <<std::endl;
     socket_other.async_receive_from(boost::asio::buffer(buffer), sender_endpoint, handle_receive);
     io_service.run();
