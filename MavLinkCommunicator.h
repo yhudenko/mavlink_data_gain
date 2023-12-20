@@ -14,6 +14,10 @@ private:
     void handle_receive(const std::error_code &error, std::size_t bytes_transferred);
     // Function to send heartbeat messages at regular intervals
     void sendHeartbeat(const std::error_code &error);
+    // Function to send MAVLink message to change flight mode
+    void setFlightMode(int base_mode, int custom_mode);
+    // Function to send MAVLink message
+    void sendMessage(mavlink_message_t *msg, std::string&& comment = "");
 
     // Boost Asio IO service for asynchronous operations
     boost::asio::io_service io_service;
